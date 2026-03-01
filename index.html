@@ -1585,7 +1585,7 @@ textarea.field-input.encrypted-mode {
         <div class="field">
           <label class="field-label">Amount (satoshis)</label>
           <div class="amount-wrap">
-            <input type="number" class="field-input" id="bm-f-amount" placeholder="e.g. 1000" min="546" oninput="BM_updatePreview()" style="padding-right:70px;">
+            <input type="number" class="field-input" id="f-amount" placeholder="e.g. 1000" min="546" oninput="BM_updatePreview()" style="padding-right:70px;">
             <div class="amount-btc" id="amountBtc">≈ 0 BTC</div>
           </div>
           <div class="field-hint" id="feeHint">Fetching fee rate...</div>
@@ -2232,7 +2232,7 @@ async function SA_createVault() {
   const msg = document.getElementById('f-msg').value.trim();
   if (!msg) { SA_notify('Message required', 'Write a message for your anchor', 'warning'); return; }
 
-  const amount = parseInt(document.getElementById('bm-f-amount')?.value);
+  const amount = parseInt(document.getElementById('f-amount').value);
   if (!amount || amount < 546) {
     SA_notify('Invalid amount', 'Minimum is 546 satoshis (dust limit)', 'warning'); return;
   }
@@ -3801,7 +3801,7 @@ function BM_updatePreview() {
 
   const recipient = BM_getEl('f-recipient').value;
   const msg       = BM_getEl('f-message').value;
-  const amountStr = BM_getEl('bm-f-amount').value;
+  const amountStr = BM_getEl('f-amount').value;
   const amount    = parseInt(amountStr) || 0;
   const isEnc     = BM_STATE.msgType === 'encrypted';
 
@@ -3866,7 +3866,7 @@ async function BM_decryptMessage(blobBytes, hexKey) {
    BUILD OP_RETURN SCRIPT
 ═══════════════════════════════════════════════════ */
 async function BM_buildOpReturnPayload(msgText, isEncrypted) {
-  const magic   = new TextEncoder().encode(PROTOCOL_MAGIC); // 6 bytes
+  const magic   = new TextEncoder().encode(BM_PROTOCOL_MAGIC); // 6 bytes
   const version = new Uint8Array([BM_PROTOCOL_VERSION]);        // 1 byte
   const type    = new Uint8Array([isEncrypted ? BM_TYPE_ENCRYPTED : BM_TYPE_PUBLIC]); // 1 byte
 
@@ -3893,7 +3893,7 @@ async function BM_sendMessage() {
 
   const recipient = document.getElementById('f-recipient').value.trim();
   const msgText   = document.getElementById('f-message').value.trim();
-  const amount    = parseInt(document.getElementById('bm-f-amount')?.value);
+  const amount    = parseInt(document.getElementById('f-amount').value);
   const isEnc     = BM_STATE.msgType === 'encrypted';
 
   if (!recipient) { BM_notify('Missing recipient', '', 'error'); return; }
