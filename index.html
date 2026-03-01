@@ -1831,6 +1831,7 @@ const SA_STATE = {
 };
 
 let SA_NETWORK = 'mainnet';
+let NETWORK = 'testnet'; // global network state for SatAnchor
 let SA_MEMPOOL_API = 'https://mempool.space/api';
 const SA_HALVING_BLOCKS = { 4:840000, 5:1050000, 6:1260000, 7:1470000, 8:1680000 };
 const SA_PROTOCOL_MAGIC = 'SATANCHOR_V1';
@@ -2043,7 +2044,8 @@ async function SA_connectWallet(type) {
       SA_notify('Connecting...', 'Waiting for UniSat approval', 'info');
       const accounts = await window.unisat.requestAccounts();
       const pubkey = await window.unisat.getPublicKey();
-      const network = await window.unisat.getNetwork();
+      const networkRaw = await window.unisat.getNetwork();
+      const network = typeof networkRaw === 'string' ? networkRaw : (networkRaw?.network || networkRaw?.name || JSON.stringify(networkRaw) || '');
 
       // Переключаем кошелёк на нужную сеть
       const targetNet = NETWORK === 'mainnet' ? 'livenet' : 'testnet';
@@ -2052,7 +2054,7 @@ async function SA_connectWallet(type) {
         ? (currentNet.includes('test') || currentNet.includes('regtest'))
         : !currentNet.includes('test');
       if (needSwitch) {
-        try { await window.unisat.SA_switchNetwork(targetNet); } catch(e) {}
+        try { await window.unisat.switchNetwork(targetNet); } catch(e) {}
       }
 
       SA_STATE.wallet = { type:'unisat', address:accounts[0], pubkey };
@@ -2102,7 +2104,7 @@ async function SA_connectWallet(type) {
         let switched = false;
         for (const netName of netNames) {
           try {
-            await provider.SA_switchNetwork(netName);
+            await provider.switchNetwork(netName);
             switched = true;
             SA_notify('Network switched', 'OP_WALLET → ' + (NETWORK === 'mainnet' ? 'Mainnet' : 'Testnet'), 'info');
             break;
@@ -4369,8 +4371,8 @@ function BM_makeTxOut(value, script) {
 // Address → scriptPubKey (P2WPKH / P2WSH bech32, P2PKH base58)
 function BM_addrToScript(address) {
   address = String(address).trim();
-  // bech32 (tb1... / bc1...)
-  if (address.startsWith('tb1') || address.startsWith('bc1')) {
+  // bech32 (tb1... / bc1... / opt1... for OPNet testnet)
+  if (address.startsWith('tb1') || address.startsWith('bc1') || address.startsWith('opt1') || address.startsWith('bcrt1')) {
     const dec = BM_bech32Decode(address);
     if (!dec) throw new Error('Invalid bech32: ' + address);
     const { witVer, witProg } = dec;
